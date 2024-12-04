@@ -1,32 +1,99 @@
 from sqlalchemy.orm import Session
 from uuid import UUID
 
-from app.data.schemas import ItemCreate
+from app.data.schemas import ItemCreate, ItemRead
 from app.data.models import Item
 from app.repositories.item_repository import ItemRepository
+from app.utils.responding.models.base_response import BaseResponse
+from app.utils.responding.response_creator import create_ok, create_error
 
 class ItemService:
     def __init__(self, db: Session):
         self.repository = ItemRepository(db)
 
-    def create_item(self, item: ItemCreate) -> Item:
-        return self.repository.create(Item(**item.model_dump()))
+# Create a new item
+    def create_item(self, item_create: ItemCreate) -> BaseResponse:
 
-    def get_items(self, skip: int = 0, limit: int = 10) -> list[Item]:
-        return self.repository.get_all(skip, limit)
+        if item_create is None:
+            return create_error("Item data is required")
+        
+        try:
+            item_orm = self.repository.create(Item(**item_create.model_dump()))
+            return create_ok("Item created successfully", ItemRead.model_validate(item_orm))
+        
+        except Exception as e:
+            return create_error(f"Error creating item: {e}", 500)
+
+# Get all items (sorting, ordering, skipping, and limiting supported)
+    def get_items(self, sort: str = None, order: int = 1, skip: int = 0, limit: int = 0) -> BaseResponse:
+        
+        try:
+            items_orm = self.repository.get_all_sorted(sort, order, skip, limit)
+
+            if items_orm is None:
+                return create_error("No items found")
+            
+            items_read = [ItemRead.model_validate(item_orm) for item_orm in items_orm]
+            return create_ok("Items retrieved successfully", items_read)
+        
+        except Exception as e:
+            return create_error(f"Error retrieving items: {e}", 500)
+
+# Get a single item by ID
+    def get_item(self, id: UUID) -> BaseResponse:
+
+        if id is None:
+            return create_error("Item ID is required")
+        
+        try:
+            item_orm = self.repository.get(id)
+
+            if item_orm is None:
+                return create_error("Item not found")
+            
+            item_read = ItemRead.model_validate(item_orm)
+            return create_ok("Item retrieved successfully", item_read)
+        
+        except Exception as e:
+            return create_error(f"Error retrieving item: {e}", 500)
     
-    def get_item(self, id: UUID) -> Item:
-        return self.repository.get(id)
+# Update an existing item
+    def update_item(self, id: UUID, item_create: ItemCreate) -> BaseResponse:
+        
+        if id is None:
+            return create_error("Item ID is required")
     
-    def update_item(self, id: UUID, item: ItemCreate) -> Item:
-        item_db = self.repository.get(id)
-        if item_db is None:
-            return None
-        # Update the attributes of the existing item
-        for key, value in item.model_dump().items():
-            setattr(item_db, key, value)
-        return self.repository.update(item_db)
-    
-    def delete_item(self, id: UUID) -> None:
-        self.repository.delete(id)
+        if item_create is None:
+            return create_error("New item data is required")
+        
+        try:
+            item_orm = self.repository.get(id)
+
+            if item_orm is None:
+                return create_error("Item not found")
+            
+            for key, value in item_create.model_dump().items():
+                setattr(item_orm, key, value)
+
+            item_updated = self.repository.update(item_orm)
+            return create_ok("Item updated successfully", ItemRead.model_validate(item_updated))
+        
+        except Exception as e:
+            return create_error(f"Error updating item: {e}", 500)
+        
+# Delete an item by ID
+    def delete_item(self, id: UUID) -> BaseResponse:
+
+        if id is None:
+            return create_error("Item ID is required")
+        
+        if not self.repository.is_object_exists(id):
+            return create_error("Item not found")
+        
+        try:
+            self.repository.delete(id)
+            return create_ok("Item deleted successfully")
+        
+        except Exception as e:
+            return create_error(f"Error deleting item: {e}", 500)
     
