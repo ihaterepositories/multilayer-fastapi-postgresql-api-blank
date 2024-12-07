@@ -11,24 +11,11 @@ class ItemService:
     def __init__(self, db: Session):
         self.repository = ItemRepository(db)
 
-# Create a new item
-    def create_item(self, item_create: ItemCreate) -> BaseResponse:
-
-        if item_create is None:
-            return create_error("Item data is required")
-        
-        try:
-            item_orm = self.repository.create(Item(**item_create.model_dump()))
-            return create_ok("Item created successfully", ItemRead.model_validate(item_orm))
-        
-        except Exception as e:
-            return create_error(f"Error creating item: {e}", 500)
-
 # Get all items (sorting, ordering, skipping, and limiting supported)
     def get_items(self, sort: str = None, order: int = 1, skip: int = 0, limit: int = 0) -> BaseResponse:
         
         try:
-            items_orm = self.repository.get_all_sorted(sort, order, skip, limit)
+            items_orm = self.repository.get_all(sort, order, skip, limit)
 
             if items_orm is None:
                 return create_error("No items found")
@@ -45,6 +32,9 @@ class ItemService:
         if id is None:
             return create_error("Item ID is required")
         
+        if not self.repository.is_object_exists(id):
+            return create_error(f"Item with the {id} ID does not exist")
+        
         try:
             item_orm = self.repository.get(id)
 
@@ -57,6 +47,19 @@ class ItemService:
         except Exception as e:
             return create_error(f"Error retrieving item: {e}", 500)
     
+# Create a new item
+    def create_item(self, item_create: ItemCreate) -> BaseResponse:
+
+        if item_create is None:
+            return create_error("Item data is required")
+        
+        try:
+            item_orm = self.repository.create(Item(**item_create.model_dump()))
+            return create_ok("Item created successfully", ItemRead.model_validate(item_orm))
+        
+        except Exception as e:
+            return create_error(f"Error creating item: {e}", 500)
+
 # Update an existing item
     def update_item(self, id: UUID, item_create: ItemCreate) -> BaseResponse:
         
@@ -65,6 +68,9 @@ class ItemService:
     
         if item_create is None:
             return create_error("New item data is required")
+        
+        if not self.repository.is_object_exists(id):
+            return create_error(f"Item with the {id} ID does not exist")
         
         try:
             item_orm = self.repository.get(id)
@@ -88,7 +94,7 @@ class ItemService:
             return create_error("Item ID is required")
         
         if not self.repository.is_object_exists(id):
-            return create_error("Item not found")
+            return create_error(f"Item with the {id} ID does not exist")
         
         try:
             self.repository.delete(id)

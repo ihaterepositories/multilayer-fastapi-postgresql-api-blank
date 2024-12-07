@@ -9,6 +9,7 @@ class Item(Base):
     id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String, index=True)
     description = Column(String, index=True, default="No description")
+    user_id = Column(UUID, ForeignKey("users.id"))
 
 class User(Base):
     __tablename__ = "users"
@@ -16,4 +17,3 @@ class User(Base):
     id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
     username = Column(String, index=True)
     email = Column(String, index=True)
-    items = Column(UUID, ForeignKey("items.id"))

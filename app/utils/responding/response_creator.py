@@ -17,12 +17,13 @@ def create_ok(message: str, data: Any = None) -> BaseResponse:
 
 def create_error(message: str, status_code: int = 400) -> BaseResponse:
     logger.error(f"{message}")
-    return BaseResponse(
+    response_body = BaseResponse(
         status_code=status_code,
         message=message,
         data_count=0,
         data=None
     )
+    raise HTTPException(status_code=status_code, detail=response_body.model_dump())
 
 def calculate_data_count(data: Any) -> int:
     if data is None:
