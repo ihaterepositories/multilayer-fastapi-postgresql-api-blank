@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from uuid import UUID
 
-from app.data.schemas import ItemCreate, ItemRead
-from app.data.models import Item
+from app.data.schemas.item_schemas import ItemCreate, ItemRead
+from app.data.models.item_model import Item
 from app.repositories.item_repository import ItemRepository
 from app.utils.responding.models.base_response import BaseResponse
 from app.utils.responding.response_creator import create_ok, create_error

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 
 from app.data.database import get_db
-from app.data import schemas
+from app.data.schemas.user_schemas import UserCreate
 from app.utils.responding.models.base_response import BaseResponse
 from app.services.user_service import UserService
 
@@ -29,14 +29,14 @@ def read_user(
 
 @user_router.post("/users", response_model=BaseResponse)
 def create_user(
-    user: schemas.UserCreate = Body(..., embed=True), 
+    user: UserCreate = Body(..., embed=True), 
     service: UserService = Depends(get_user_service)):
     return service.create_user(user)
 
 @user_router.put("/users", response_model=BaseResponse)
 def update_user(
     user_id: UUID = Query(..., description="User ID"),
-    user: schemas.UserCreate = Body(..., embed=True), 
+    user: UserCreate = Body(..., embed=True), 
     service: UserService = Depends(get_user_service)):
     return service.update_user(user_id, user)
 

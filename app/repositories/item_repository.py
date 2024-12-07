@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.data.models import Item
+from app.data.models.item_model import Item
 from app.repositories.interfaces.generic_repository import GenericRepository
 
 class ItemRepository(GenericRepository[Item]):

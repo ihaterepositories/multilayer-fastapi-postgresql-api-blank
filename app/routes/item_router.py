@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 
 from app.data.database import get_db
-from app.data import schemas
+from app.data.schemas.item_schemas import ItemCreate
 from app.utils.responding.models.base_response import BaseResponse
 from app.services.item_service import ItemService
 
@@ -29,14 +29,14 @@ def read_item(
 
 @item_router.post("/items", response_model=BaseResponse)
 def create_item(
-    item: schemas.ItemCreate = Body(..., embed=True), 
+    item: ItemCreate = Body(..., embed=True), 
     service: ItemService = Depends(get_item_service)):
     return service.create_item(item)
 
 @item_router.put("/items", response_model=BaseResponse)
 def update_item(
     item_id: UUID = Query(..., description="Item ID"),
-    item: schemas.ItemCreate = Body(..., embed=True), 
+    item: ItemCreate = Body(..., embed=True), 
     service: ItemService = Depends(get_item_service)):
     return service.update_item(item_id, item)
 
